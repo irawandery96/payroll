@@ -137,7 +137,7 @@ details.wd[open] summary:after{content:"▴"}
 .days div b{display:block;font-size:14px;color:var(--ink)}
 .days div.hd b{color:var(--ok)}.days div.hf b{color:var(--warn)}
 .acts{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 14px}
-.acts .btn{flex:1}
+.acts .btn{flex:1 1 150px;padding:13px 10px}
 /* pekerja */
 .pcard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
 .pcard.off{opacity:.65}
@@ -417,7 +417,7 @@ function showView(v, force) {
     if (curView === 'pkj' && pkjDirty && !confirm('Daftar pekerja belum disimpan. Pindah halaman dan buang perubahan?')) return;
     if (curView === 'pkj' && pkjDirty) { pkjDirty = false; renderPkj(); }
   }
-  curView = v;
+  curView = v; $('snack').classList.add('hide');
   document.querySelectorAll('.tabbar button').forEach(x => x.classList.toggle('on', x.dataset.v === v));
   document.querySelectorAll('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + v));
   if (v === 'abs') loadAbs();
@@ -681,7 +681,7 @@ function renderGaji(g) {
       (r.pot ? '<div class="line neg"><span>Potongan / kasbon</span><b>− ' + idr(r.pot) + '</b></div>' : '') +
       '<div class="line tot"><span><b>Total diterima</b></span><b>' + idr(r.total) + '</b></div>' + daysChips(g, r) + '</div></details>';
   });
-  h += '<div class="acts"><button class="btn" id="btnPrint">🖨 Cetak daftar gaji</button><button class="btn sec" id="btnSheet">Lihat tabel cetak</button></div></div>';
+  h += '<div class="acts"><button class="btn" id="btnPrint">🖨 Cetak gaji</button><button class="btn sec" id="btnSheet">Lihat tabel cetak</button></div></div>';
 
   const showDays = nd <= 10;
   h += '<div class="sheet" id="gSheet"><div class="ttl">DAFTAR UPAH PEKERJA</div>' +

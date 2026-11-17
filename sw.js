@@ -1,6 +1,7 @@
-// Service worker: menyimpan tampilan aplikasi agar tetap terbuka saat sinyal lemah.
+// Service worker: tampilan aplikasi tetap terbuka saat sinyal lemah.
+// Strategi: ambil versi terbaru dari internet dulu, kalau gagal pakai salinan di HP.
 // Naikkan angka VERSI setiap kali file di folder ini diperbarui.
-const VERSI = 'upah-v1';
+const VERSI = 'upah-v2';
 const SHELL = ['./', './index.html', './config.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -18,12 +19,12 @@ self.addEventListener('fetch', e => {
   const u = new URL(e.request.url);
   if (e.request.method !== 'GET' || u.origin !== location.origin) return;   // API tidak di-cache
   e.respondWith(
-    caches.match(e.request, { ignoreSearch: true }).then(hit => {
-      const net = fetch(e.request).then(r => {
-        if (r.ok) { const cp = r.clone(); caches.open(VERSI).then(c => c.put(e.request, cp)); }
-        return r;
-      }).catch(() => hit || caches.match('./index.html'));
-      return hit || net;
-    })
+    Promise.race([
+      fetch(e.request, { cache: 'no-cache' }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 4000))
+    ]).then(r => {
+      if (r && r.ok) { const cp = r.clone(); caches.open(VERSI).then(c => c.put(e.request, cp)); }
+      return r;
+    }).catch(() => caches.match(e.request, { ignoreSearch: true }).then(hit => hit || caches.match('./index.html')))
   );
 });
