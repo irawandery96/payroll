@@ -11,6 +11,7 @@
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Upah Pekerja</title>
+<style id="pageStyle">@page{size:A4 landscape;margin:10mm}</style>
 <style>
 :root{--bg:#f2f5f9;--card:#fff;--ink:#17212f;--mut:#667385;--pri:#1f4e79;--pri-s:#e8f0f8;--ok:#15803d;--ok-s:#e6f6ec;--warn:#b45309;--warn-s:#fff3dc;--bad:#b91c1c;--bad-s:#fdeaea;--line:#e2e8f0;--tab:64px}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -109,7 +110,7 @@ input:focus{outline:2px solid var(--pri);outline-offset:0;border-color:var(--pri
 .chip.on{background:var(--pri);border-color:var(--pri);color:#fff}
 .ottext{font-size:14px;font-weight:bold;color:var(--warn);min-height:18px;margin-top:6px}
 .more{margin-top:8px;border:0;background:none;color:var(--pri);font-size:14px;font-weight:bold;padding:6px 0}
-.extra{display:flex;gap:10px;margin-top:6px}
+.extra{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
 /* periode */
 .range{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}
 .range .lbl{font-size:13px;color:var(--mut);margin-bottom:6px}
@@ -157,9 +158,30 @@ th{background:#d9d9d9}
 td.l{text-align:left}td.r{text-align:right}
 .sign{display:flex;justify-content:space-around;margin-top:18px;font-size:12px;text-align:center}
 .sign div{width:30%}.sign .sp{height:55px}
-@page{size:A4 landscape;margin:10mm}
+#printArea{display:none}
+.slip{font-size:12px;color:#000}
+.slip .sl-ttl{text-align:center;font-weight:bold;font-size:18px;letter-spacing:1px}
+.slip .sl-sub{text-align:center;font-size:13px;margin-bottom:10px}
+.slip .sl-meta{display:grid;grid-template-columns:1fr 1fr;gap:3px 16px;margin-bottom:10px;font-size:13px}
+.slip .sl-meta span{display:inline-block;min-width:92px;color:#333}
+.slip table{width:100%}
+.slip th,.slip td{font-size:11px;padding:3px 5px;border:1px solid #666}
+.slip td.l{text-align:left}
+.slip .tot td{font-weight:bold;background:#eee}
+.slip h4{margin:12px 0 4px;font-size:13px}
+.slip .sl-sum td{font-size:12.5px;border:0;border-bottom:1px solid #ccc;text-align:left}
+.slip .sl-sum td:last-child{text-align:right;white-space:nowrap}
+.slip .sl-sum tr.grand td{font-size:15px;font-weight:bold;border-top:2px solid #000;border-bottom:2px solid #000}
+.slip .sl-sign{display:flex;justify-content:space-around;margin-top:20px;text-align:center;font-size:12px}
+.slip .sl-sign div{width:40%}.slip .sl-sign .sp{height:60px}
+.slip .sl-foot{margin-top:10px;font-size:10px;color:#555}
+td.ket{text-align:left;font-size:10px}
 @media print{
-  .appbar,.tabbar,.noprint,#snack,#saveBar{display:none!important}
+  .appbar,.tabbar,.noprint,#snack,#saveBar,.vhead,.range{display:none!important}
+  body.printing-slip #app,body.printing-slip #login{display:none!important}
+  body.printing-slip #printArea{display:block}
+  .slip{break-after:page;page-break-after:always}
+  .slip:last-child{break-after:auto;page-break-after:auto}
   body{background:#fff}main{padding:0;max-width:none}
   .sheet{display:block!important}
   .card{border:0;box-shadow:none;padding:0}
@@ -267,6 +289,7 @@ td.l{text-align:left}td.r{text-align:right}
   </nav>
 </div>
 <div id="snack" class="hide" role="status"></div>
+<div id="printArea"></div>
 
 <script src="config.js"></script>
 <script>
@@ -496,7 +519,7 @@ function absStatus() {
   else if (abs.saved) { e.className = 'dstat ok'; e.textContent = '✓ Sudah tersimpan'; }
   else { e.className = 'dstat'; e.textContent = 'Belum diisi'; }
 }
-function rowsToData(rows) { const o = {}; rows.forEach(r => { o[r.nama] = { hadir: r.hadir, pulang: r.pulang, bonus: r.bonus, pot: r.pot }; }); return o; }
+function rowsToData(rows) { const o = {}; rows.forEach(r => { o[r.nama] = { hadir: r.hadir, pulang: r.pulang, bonus: r.bonus, pot: r.pot, cat: r.cat }; }); return o; }
 
 async function loadAbs() {
   const d = abs.date, my = ++reqId;
@@ -532,11 +555,13 @@ function renderAbs(data) {
       '<input type="time" class="pulang" aria-label="Jam pulang"><div class="ottext"></div></div>' +
       '<button type="button" class="more">+ Bonus / kasbon</button>' +
       '<div class="extra hide"><label class="fld">Bonus (Rp)<input type="number" class="bonus" min="0" step="1000" inputmode="numeric"></label>' +
-      '<label class="fld">Kasbon / potongan (Rp)<input type="number" class="pot" min="0" step="1000" inputmode="numeric"></label></div>';
+      '<label class="fld">Kasbon / potongan (Rp)<input type="number" class="pot" min="0" step="1000" inputmode="numeric"></label>' +
+      '<label class="fld" style="flex-basis:100%">Keterangan bonus / kasbon (opsional)<input type="text" class="cat" maxlength="100" placeholder="mis. kasbon beli bahan"></label></div>';
     c.querySelector('.pulang').value = e.pulang || '';
     c.querySelector('.bonus').value = e.bonus || '';
     c.querySelector('.pot').value = e.pot || '';
-    if (e.bonus || e.pot) { c.querySelector('.extra').classList.remove('hide'); c.querySelector('.more').classList.add('hide'); }
+    c.querySelector('.cat').value = e.cat || '';
+    if (e.bonus || e.pot || e.cat) { c.querySelector('.extra').classList.remove('hide'); c.querySelector('.more').classList.add('hide'); }
     setStatus(c, e.hadir === 1 ? 1 : (e.hadir > 0 ? 0.5 : 0));
     box.appendChild(c);
   });
@@ -586,7 +611,8 @@ $('allHadir').onclick = () => { document.querySelectorAll('#absList .wcard').for
 function collectAbs() {
   return [...document.querySelectorAll('#absList .wcard')].map(c => ({
     nama: c.dataset.nama, hadir: Number(c.dataset.v), pulang: c.querySelector('.pulang').value,
-    bonus: Number(c.querySelector('.bonus').value) || 0, pot: Number(c.querySelector('.pot').value) || 0
+    bonus: Number(c.querySelector('.bonus').value) || 0, pot: Number(c.querySelector('.pot').value) || 0,
+    cat: c.querySelector('.cat').value.trim()
   }));
 }
 async function saveAbs() {
@@ -650,7 +676,9 @@ async function loadGaji() {
   $('gajiOut').innerHTML = loadingHtml('Menghitung gaji...');
   try {
     const g = await api('getGaji', { dari: range.dari, sampai: range.sampai });
-    if (my !== reqId) return; renderGaji(g);
+    if (my !== reqId) return;
+    if (!g || !g.dari) throw new Error('Apps Script masih versi lama. Tempel Code.gs yang baru, lalu Deploy > Manage deployments > Edit > New version > Deploy.');
+    renderGaji(g);
   } catch (e) {
     if (my !== reqId) return;
     $('gajiOut').innerHTML = '<div class="card empty"><b>' + (e.offline ? 'Tidak ada koneksi' : 'Gagal memuat') + '</b>' + esc(e.offline ? 'Gaji perlu internet untuk dihitung.' : e.message) + '</div>';
@@ -664,7 +692,16 @@ function daysChips(g, r) {
     return '<div class="' + (v === 1 ? 'hd' : v > 0 ? 'hf' : '') + '">' + hariN(d).slice(0, 3) + '<b>' + (v === 1 ? '✓' : v > 0 ? '½' : '–') + '</b>' + tglS(d) + '</div>';
   }).join('') + '</div>';
 }
+let lastGaji = null;
+const dLbl = d => hariN(d.tgl).slice(0, 3) + ' ' + tglS(d.tgl);
+function ketText(r) {
+  return (r.detail || []).filter(d => d.bonus > 0 || d.pot > 0).map(d => {
+    const k = d.cat ? ' (' + esc(d.cat) + ')' : '';
+    return (d.pot > 0 ? 'Kasbon ' + tglS(d.tgl) + ': ' + rp(d.pot) : '') + (d.pot > 0 && d.bonus > 0 ? '; ' : '') + (d.bonus > 0 ? 'Bonus ' + tglS(d.tgl) + ': ' + rp(d.bonus) : '') + k;
+  }).join('<br>');
+}
 function renderGaji(g) {
+  lastGaji = g;
   const t = g.tot, s = g.settings, nd = g.days.length;
   const kosong = g.rows.every(r => r.totalHari === 0 && r.bonus === 0 && r.pot === 0);
   if (!g.rows.length || kosong) {
@@ -673,15 +710,20 @@ function renderGaji(g) {
   let h = '<div class="noprint"><div class="big"><div class="l">Total gaji yang harus dibayar</div><div class="v">' + idr(t.total) + '</div>' +
     '<div class="st"><span>' + periode(g.dari, g.sampai) + '</span><span>' + g.rows.length + ' pekerja</span><span>' + jam(t.totalHari) + ' hari kerja</span>' +
     (t.lembur ? '<span>lembur ' + jam(t.lembur) + ' jam</span>' : '') + '</div></div>';
-  g.rows.forEach(r => {
-    h += '<details class="wd"><summary><div><b>' + esc(r.nama) + '</b><div class="muted">' + esc(r.jabatan) + ' · ' + jam(r.totalHari) + ' hari' + (r.lembur ? ' · lembur ' + jam(r.lembur) + ' jam' : '') + '</div></div><div class="amt">' + idr(r.total) + '</div></summary><div class="brk">' +
+  g.rows.forEach((r, i) => {
+    const det = r.detail || [];
+    const ln = (d, key, neg) => '<div class="line' + (neg ? ' neg' : '') + '"><span>' + (neg ? 'Kasbon' : 'Bonus') + ' · ' + dLbl(d) + (d.cat ? ' (' + esc(d.cat) + ')' : '') + '</span><b>' + (neg ? '− ' : '') + idr(d[key]) + '</b></div>';
+    h += '<details class="wd"><summary><div><b>' + esc(r.nama) + '</b><div class="muted">' + esc(r.jabatan) + ' · ' + jam(r.totalHari) + ' hari' + (r.lembur ? ' · lembur ' + jam(r.lembur) + ' jam' : '') + (r.pot ? ' · kasbon ' + idr(r.pot) : '') + '</div></div><div class="amt">' + idr(r.total) + '</div></summary><div class="brk">' +
       '<div class="line"><span>Upah pokok (' + jam(r.totalHari) + ' hari × ' + idr(r.upah) + ')</span><b>' + idr(r.pokok) + '</b></div>' +
       (r.upahLembur ? '<div class="line"><span>Lembur ' + jam(r.lembur) + ' jam</span><b>' + idr(r.upahLembur) + '</b></div>' : '') +
-      (r.bonus ? '<div class="line"><span>Bonus</span><b>' + idr(r.bonus) + '</b></div>' : '') +
-      (r.pot ? '<div class="line neg"><span>Potongan / kasbon</span><b>− ' + idr(r.pot) + '</b></div>' : '') +
-      '<div class="line tot"><span><b>Total diterima</b></span><b>' + idr(r.total) + '</b></div>' + daysChips(g, r) + '</div></details>';
+      det.filter(d => d.bonus > 0).map(d => ln(d, 'bonus', false)).join('') +
+      det.filter(d => d.pot > 0).map(d => ln(d, 'pot', true)).join('') +
+      '<div class="line tot"><span><b>Total diterima</b></span><b>' + idr(r.total) + '</b></div>' + daysChips(g, r) +
+      '<button type="button" class="btn btnSlip" data-i="' + i + '" style="width:100%;margin-top:12px">🧾 Cetak slip ' + esc(r.nama) + '</button></div></details>';
   });
-  h += '<div class="acts"><button class="btn" id="btnPrint">🖨 Cetak gaji</button><button class="btn sec" id="btnSheet">Lihat tabel cetak</button></div></div>';
+  h += '<div class="acts"><button class="btn" id="btnSlipAll">🧾 Cetak slip semua pekerja</button></div>' +
+    '<div class="acts"><button class="btn sec" id="btnPrint">🖨 Cetak daftar gabungan</button><button class="btn sec" id="btnSheet">Lihat tabel cetak</button></div>' +
+    '<p class="muted">Slip dicetak satu halaman per pekerja, jadi bisa diberikan terpisah. Daftar gabungan untuk arsip pemilik.</p></div>';
 
   const showDays = nd <= 10;
   h += '<div class="sheet" id="gSheet"><div class="ttl">DAFTAR UPAH PEKERJA</div>' +
@@ -690,18 +732,75 @@ function renderGaji(g) {
     '<div class="info">Lembur dihitung setelah jam ' + esc(s.batas) + '; tarif lembur/jam = upah per hari ÷ ' + s.pembagi + ' × ' + s.faktor + '</div>' +
     '<div class="wrap"><table><thead><tr><th>No</th><th>Nama Pekerja</th><th>Jabatan</th><th>Upah / Hari</th>' +
     (showDays ? g.days.map(d => '<th>' + hariN(d).slice(0, 3) + '<br>' + tglS(d) + '</th>').join('') : '') +
-    '<th>Total Hari</th><th>Lembur (jam)</th><th>Upah Pokok</th><th>Upah Lembur</th><th>Bonus</th><th>Potongan / Kasbon</th><th>Total Diterima</th><th>Tanda Tangan</th></tr></thead><tbody>';
+    '<th>Total Hari</th><th>Lembur (jam)</th><th>Upah Pokok</th><th>Upah Lembur</th><th>Bonus</th><th>Potongan / Kasbon</th><th>Total Diterima</th><th>Keterangan Bonus / Kasbon</th><th>Tanda Tangan</th></tr></thead><tbody>';
   g.rows.forEach((r, i) => {
     h += '<tr style="height:28px"><td>' + (i + 1) + '</td><td class="l">' + esc(r.nama) + '</td><td class="l">' + esc(r.jabatan) + '</td><td class="r">' + rp(r.upah) + '</td>' +
       (showDays ? r.hari.map(v => '<td>' + (v ? (v === 1 ? '1' : '0,5') : '') + '</td>').join('') : '') +
-      '<td>' + jam(r.totalHari) + '</td><td>' + (r.lembur ? jam(r.lembur) : '') + '</td><td class="r">' + rp(r.pokok) + '</td><td class="r">' + rp(r.upahLembur) + '</td><td class="r">' + rp(r.bonus) + '</td><td class="r">' + rp(r.pot) + '</td><td class="r"><b>' + rp(r.total) + '</b></td><td></td></tr>';
+      '<td>' + jam(r.totalHari) + '</td><td>' + (r.lembur ? jam(r.lembur) : '') + '</td><td class="r">' + rp(r.pokok) + '</td><td class="r">' + rp(r.upahLembur) + '</td><td class="r">' + rp(r.bonus) + '</td><td class="r">' + rp(r.pot) + '</td><td class="r"><b>' + rp(r.total) + '</b></td><td class="ket">' + ketText(r) + '</td><td></td></tr>';
   });
-  h += '<tr><th colspan="' + (4 + (showDays ? nd : 0)) + '">TOTAL</th><th>' + jam(t.totalHari) + '</th><th>' + jam(t.lembur) + '</th><th class="r">' + rp(t.pokok) + '</th><th class="r">' + rp(t.upahLembur) + '</th><th class="r">' + rp(t.bonus) + '</th><th class="r">' + rp(t.pot) + '</th><th class="r">' + rp(t.total) + '</th><th></th></tr></tbody></table></div>' +
+  h += '<tr><th colspan="' + (4 + (showDays ? nd : 0)) + '">TOTAL</th><th>' + jam(t.totalHari) + '</th><th>' + jam(t.lembur) + '</th><th class="r">' + rp(t.pokok) + '</th><th class="r">' + rp(t.upahLembur) + '</th><th class="r">' + rp(t.bonus) + '</th><th class="r">' + rp(t.pot) + '</th><th class="r">' + rp(t.total) + '</th><th></th><th></th></tr></tbody></table></div>' +
     '<div class="sign"><div>Dibuat oleh,<div class="sp"></div>(.......................)<br>Pengawas / Mandor</div><div>Diperiksa oleh,<div class="sp"></div>(.......................)<br>Admin</div><div>Disetujui oleh,<div class="sp"></div>(.......................)<br>Pemilik</div></div></div>';
   $('gajiOut').innerHTML = h;
-  $('btnPrint').onclick = () => window.print();
-  $('btnSheet').onclick = () => { const e = $('gSheet'); e.classList.toggle('show'); $('btnSheet').textContent = e.classList.contains('show') ? 'Sembunyikan tabel cetak' : 'Lihat tabel cetak'; };
 }
+
+/* ---------- cetak: slip per pekerja & tabel ---------- */
+function setPage(css) { $('pageStyle').textContent = css; }
+function slipHtml(g, r) {
+  const s = g.settings, det = r.detail || [];
+  const stat = v => v === 1 ? 'Hadir' : v > 0 ? '½ hari' : 'Tidak masuk';
+  const lbl = d => hariN(d.tgl) + ', ' + tglS(d.tgl);
+  let h = '<div class="slip"><div class="sl-ttl">SLIP UPAH PEKERJA</div><div class="sl-sub">' + esc(s.proyek) + '</div>' +
+    '<div class="sl-meta"><div><span>Nama</span>: <b>' + esc(r.nama) + '</b></div><div><span>Periode</span>: ' + periode(g.dari, g.sampai) + '</div>' +
+    '<div><span>Jabatan</span>: ' + esc(r.jabatan) + '</div><div><span>Upah per hari</span>: ' + idr(r.upah) + '</div></div>' +
+    '<table><thead><tr><th>Tanggal</th><th>Kehadiran</th><th>Jam pulang</th><th>Lembur (jam)</th><th>Bonus (Rp)</th><th>Kasbon (Rp)</th><th>Keterangan</th></tr></thead><tbody>';
+  if (!det.length) h += '<tr><td colspan="7">Tidak ada data absensi pada periode ini</td></tr>';
+  det.forEach(d => {
+    h += '<tr><td class="l">' + lbl(d) + '</td><td>' + stat(d.hadir) + '</td><td>' + (d.pulang || '-') + '</td><td>' + (d.lembur ? jam(d.lembur) : '-') + '</td><td class="r">' + rp(d.bonus) + '</td><td class="r">' + rp(d.pot) + '</td><td class="l">' + esc(d.cat || '') + '</td></tr>';
+  });
+  h += '<tr class="tot"><td class="l">Total</td><td>' + jam(r.totalHari) + ' hari</td><td></td><td>' + (r.lembur ? jam(r.lembur) : '-') + '</td><td class="r">' + rp(r.bonus) + '</td><td class="r">' + rp(r.pot) + '</td><td></td></tr></tbody></table>';
+  const pots = det.filter(d => d.pot > 0), bons = det.filter(d => d.bonus > 0);
+  const lst = (arr, key) => arr.map(d => '<tr><td>' + lbl(d) + (d.cat ? ' — ' + esc(d.cat) : '') + '</td><td>' + idr(d[key]) + '</td></tr>').join('');
+  h += '<h4>Rincian kasbon / potongan</h4><table class="sl-sum">' + (pots.length ? lst(pots, 'pot') : '<tr><td>Tidak ada kasbon pada periode ini</td><td></td></tr>') + '</table>';
+  if (bons.length) h += '<h4>Rincian bonus</h4><table class="sl-sum">' + lst(bons, 'bonus') + '</table>';
+  h += '<h4>Perhitungan</h4><table class="sl-sum">' +
+    '<tr><td>Upah pokok (' + jam(r.totalHari) + ' hari × ' + idr(r.upah) + ')</td><td>' + idr(r.pokok) + '</td></tr>' +
+    (r.lembur ? '<tr><td>Upah lembur (' + jam(r.lembur) + ' jam, lewat jam ' + esc(s.batas) + ')</td><td>' + idr(r.upahLembur) + '</td></tr>' : '') +
+    (r.bonus ? '<tr><td>Bonus</td><td>+ ' + idr(r.bonus) + '</td></tr>' : '') +
+    (r.pot ? '<tr><td>Kasbon / potongan</td><td>− ' + idr(r.pot) + '</td></tr>' : '') +
+    '<tr class="grand"><td>TOTAL DITERIMA</td><td>' + idr(r.total) + '</td></tr></table>' +
+    '<div class="sl-sign"><div>Penerima,<div class="sp"></div>(' + esc(r.nama) + ')</div><div>Pemberi,<div class="sp"></div>(.......................)</div></div>' +
+    '<div class="sl-foot">Dicetak ' + tgl(fmt(new Date())) + '</div></div>';
+  return h;
+}
+function printSlips(idxs) {
+  const g = lastGaji; if (!g || !idxs.length) return;
+  $('printArea').innerHTML = idxs.map(i => slipHtml(g, g.rows[i])).join('');
+  document.body.classList.add('printing-slip');
+  setPage('@page{size:A4 portrait;margin:12mm}');
+  window.print();
+}
+function printTable() {
+  document.body.classList.remove('printing-slip'); $('printArea').innerHTML = '';
+  setPage('@page{size:A4 landscape;margin:10mm}');
+  window.print();
+}
+window.addEventListener('afterprint', () => {
+  document.body.classList.remove('printing-slip'); $('printArea').innerHTML = '';
+  setPage('@page{size:A4 landscape;margin:10mm}');
+});
+$('gajiOut').addEventListener('click', e => {
+  const b = e.target.closest('.btnSlip');
+  if (b) { printSlips([Number(b.dataset.i)]); return; }
+  if (e.target.closest('#btnSlipAll')) {
+    const idx = []; lastGaji.rows.forEach((r, i) => { if (r.totalHari > 0 || r.bonus > 0 || r.pot > 0) idx.push(i); });
+    printSlips(idx); return;
+  }
+  if (e.target.closest('#btnPrint')) { printTable(); return; }
+  if (e.target.closest('#btnSheet')) {
+    const el = $('gSheet'); el.classList.toggle('show');
+    $('btnSheet').textContent = el.classList.contains('show') ? 'Sembunyikan tabel cetak' : 'Lihat tabel cetak';
+  }
+});
 
 /* ================= REKAP ================= */
 async function loadRekap() {
@@ -709,7 +808,9 @@ async function loadRekap() {
   $('rekapOut').innerHTML = loadingHtml('Menyusun rekap...');
   try {
     const r = await api('getRekap', { dari: range.dari, sampai: range.sampai });
-    if (my !== reqId) return; renderRekap(r);
+    if (my !== reqId) return;
+    if (!r || !r.segments) throw new Error('Apps Script masih versi lama. Tempel Code.gs yang baru, lalu Deploy > Manage deployments > Edit > New version > Deploy.');
+    renderRekap(r);
   } catch (e) {
     if (my !== reqId) return;
     $('rekapOut').innerHTML = '<div class="card empty"><b>' + (e.offline ? 'Tidak ada koneksi' : 'Gagal memuat') + '</b>' + esc(e.offline ? 'Rekap perlu internet.' : e.message) + '</div>';
@@ -735,7 +836,7 @@ function renderRekap(r) {
     r.rows.map((x, i) => '<tr><td>' + (i + 1) + '</td><td class="l">' + esc(x.nama) + '</td>' + x.per.map(v => '<td class="r">' + rp(v) + '</td>').join('') + '<td class="r"><b>' + rp(x.total) + '</b></td></tr>').join('') +
     '<tr><th colspan="2">TOTAL</th>' + r.colTot.map(v => '<th class="r">' + rp(v) + '</th>').join('') + '<th class="r">' + rp(r.grand) + '</th></tr></tbody></table></div></div>';
   $('rekapOut').innerHTML = h;
-  $('btnPrint2').onclick = () => window.print();
+  $('btnPrint2').onclick = () => printTable();
   $('btnSheet2').onclick = () => { const e = $('rSheet'); e.classList.toggle('show'); $('btnSheet2').textContent = e.classList.contains('show') ? 'Sembunyikan tabel cetak' : 'Lihat tabel cetak'; };
 }
 

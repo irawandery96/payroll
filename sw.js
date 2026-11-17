@@ -1,7 +1,7 @@
 // Service worker: tampilan aplikasi tetap terbuka saat sinyal lemah.
 // Strategi: ambil versi terbaru dari internet dulu, kalau gagal pakai salinan di HP.
 // Naikkan angka VERSI setiap kali file di folder ini diperbarui.
-const VERSI = 'upah-v2';
+const VERSI = 'upah-v4';
 const SHELL = ['./', './index.html', './config.js', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
